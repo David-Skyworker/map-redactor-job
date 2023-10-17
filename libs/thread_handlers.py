@@ -19,10 +19,10 @@ class GenHandler(QThread):
         generated_elements = generate_way(self.info)
 
         # запись сгенерированных элементов в кофигпарсер
-        self.write(generated_elements)
+        # self.write(generated_elements)
 
         # сохранение обновленных данных в файл
-        self.save_config()
+        # self.save_config()
 
     def write(self, elements):
 

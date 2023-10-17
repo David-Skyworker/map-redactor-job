@@ -136,7 +136,8 @@ class Window(QMainWindow, Ui_MainWindow):
         control_info = {"num": int(self.numContrText.text()),
                         "height": int(self.heightContrText.text()),
                         "width": int(self.widthContrText.text()),
-                        "upper_margin": int(self.marginContrText.text())}
+                        "upper_margin": int(self.marginContrText.text()),
+                        "start_rc": self.comboBoxContr.currentIndex()}
 
         # ифнформация об УКСПС, считанная из пользовательского интерфейса
         uksps_info = {"num": self.numRcText.text(),
@@ -157,8 +158,8 @@ class Window(QMainWindow, Ui_MainWindow):
         # ифнформация о перегоне
         info = {"general": general_info,
                 "rc": rc_info,
-                "gen": gen_info,
-                "control": control_info,
+                "mgks": gen_info,
+                "mkrc": control_info,
                 "uksps": uksps_info,
                 "arrow": arrow_info,
                 "ind": ind_info}
