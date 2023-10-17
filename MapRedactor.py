@@ -1,5 +1,5 @@
-from UI.MapRedactor import Ui_MainWindow
-from UI.RcSettings import Ui_RcDialog
+from UI.UI_Main import Ui_MainWindow
+from UI.UI_RcSettings import Ui_RcDialog
 from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QDialog
 from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
