@@ -134,8 +134,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # ифнформация об МКРЦ, считанная из пользовательского интерфейса
         control_info = {"num": int(self.numContrText.text()),
-                        "height": int(self.heightContrText.text()),
-                        "width": int(self.widthContrText.text()),
+                        "height": self.heightContrText.text(),
+                        "width": self.widthContrText.text(),
                         "upper_margin": int(self.marginContrText.text()),
                         "start_rc": self.comboBoxContr.currentIndex()}
 
