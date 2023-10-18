@@ -19,10 +19,10 @@ class GenHandler(QThread):
         generated_elements = generate_way(self.info)
 
         # запись сгенерированных элементов в кофигпарсер
-        # self.write(generated_elements)
+        self.write(generated_elements)
 
         # сохранение обновленных данных в файл
-        # self.save_config()
+        self.save_config()
 
     def write(self, elements):
 
@@ -32,10 +32,10 @@ class GenHandler(QThread):
             config.file_data["StationPlan"] = {}
             config.file_data["StationPlan"]["INITinfo"] = ""
             info = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '']
+
         self.write_rc(elements["rc"], info)
+        self.write_mkrc(elements["mkrc"], info)
         config.file_data["StationPlan"]["INITinfo"] = ';'.join(info)
-
-
 
     def write_rc(self, rc_list, info):
         num = info[5]
@@ -44,6 +44,14 @@ class GenHandler(QThread):
             config.file_data["StationPlan"]["PerRC" + num] = rc
         else:
             info[5] = num
+
+    def write_mkrc(self,  mkrc_list, info):
+        num = info[3]
+        for i, mkrc in enumerate(mkrc_list):
+            num = str(i + int(info[5]) + 1)
+            config.file_data["StationPlan"]["MKRCenter" + num] = mkrc
+        else:
+            info[3] = num
 
     def save_config(self):
         with open(config.file_path, 'w') as configfile:
