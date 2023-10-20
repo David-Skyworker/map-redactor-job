@@ -19,9 +19,12 @@ def generate_way(info):
     mkrc_list, mkrc_nums = _generate_mkrc(info["mkrc"], info["general"], rc_coordinates)
 
     rc_list = _set_rc_mkrc_linking(rc_list, mkrc_nums)
-    print(rc_list)
 
-    return {"rc": rc_list, "mkrc": mkrc_list, "mgks": rc_list, "uksps": rc_list, "arrow": rc_list, "ind": rc_list}
+    mgks_list = _generate_mgks(info["mgks"], info["general"], rc_coordinates)
+
+    arrow = _generate_arrow(info["arrow"], info["general"], rc_list[0])
+
+    return {"rc": rc_list, "mkrc": mkrc_list, "mgks": mgks_list, "uksps": rc_list, "arrow": arrow, "ind": rc_list}
 
 
 def _adjust_margins(info):
@@ -34,7 +37,7 @@ def _adjust_margins(info):
     mkrc_margin = info["mkrc"]["upper_margin"] + int(info["rc"]["height"])
     mgks_margin = info["mgks"]["upper_margin"] + mkrc_margin + int(info["mkrc"]["height"])
 
-    info["mkrc"]["upper_margin"], info["mgks"]["upper_margin"] =mkrc_margin, mgks_margin
+    info["mkrc"]["upper_margin"], info["mgks"]["upper_margin"] = mkrc_margin, mgks_margin
 
 
 def _generate_rc(info, general):
@@ -133,7 +136,7 @@ def _generate_mkrc(info, general, coordinates):
 
         # генерация  координат МКРЦ пары в зависимости от стартового РЦ
         if info["start_rc"] == 0:  # 1-ое РЦ
-            mkrc_coordinates = coordinates[::2]
+            mkrc_coordinates = coordinates[:-1:2]
         else:                      # 2-ое РЦ
             mkrc_coordinates = coordinates[1:-1:2]
     # ----------------------------------------------------------------------------------------------------
@@ -158,10 +161,10 @@ def _generate_mkrc(info, general, coordinates):
         mkrc[0] = str(general["coordinates"][1] + info["upper_margin"])  # сдвиг по Y
         mkrc[2] = info["height"]
         mkrc[3] = info["width"]
-        mkrc[8] = general["set_num"]  # номер комплекта
-        mkrc[9] = str(i + 1)          # номер МКРЦ
-        mkrc[10] = '2'                # увязка (номерация РЦ)
-        # 9 - номер мкрц и 10 - привязка к рц
+        mkrc[8] = general["set_num"]              # номер комплекта
+        mkrc[9] = str(i + 1)                      # номер МКРЦ
+        mkrc[10] = '2'                            # увязка (номерация РЦ)
+        mkrc[11] = str(int(general["reserved"]))  # резервирование
 
         # одиночная/пара МКРЦ
         if coordinate_x in rc_edges:  # одиночная МКРЦ
@@ -203,9 +206,6 @@ def _generate_mkrc(info, general, coordinates):
 
 
 def _set_rc_mkrc_linking(rc_arrays_list, mkrc_nums):
-    print(mkrc_nums)
-    print(rc_arrays_list)
-
     # проверка на наличие МКРЦ
     if not mkrc_nums:
         return [';'.join(rc) for rc in rc_arrays_list]
@@ -232,67 +232,110 @@ def _set_rc_mkrc_linking(rc_arrays_list, mkrc_nums):
     return rc_strings_list
 
 
-# def _generate_mgks(info, general, coordinates):
-#     """
-#     Функция генерации МГКС.
-#     :param info: dict
-#         данные о аттрибутах рельсовых МГКС необходимые для их отрисовки(width, height etc.)
-#     :param general: dict
-#         общие сведения о перегоне
-#     :param coordinates: dict
-#         координаты начал рельсовых цепей для задания координат МГКС
-#
-#     :return: список, содержащий результат генерации МГКС
-#     """
-#
-#     # генерация координат МГКС
-#
-#
-#     # список для хранения МГКС
-#     generated_mgks = []
-#     for i in range(info["num"]):
-#
-#         # инициализация временной переменой РЦ для шага генерации
-#         rc = ['0', '0', '20', '40', 'Имя', '1', '0', '0', '0', '0', '0', '0', '0', '0', '']
-#
-#         # запись параметров РЦ
-#         rc[0] = str(general["coordinates"][1])              # сдвиг по X
-#         rc[1] = str(general["coordinates"][0] + shifts[i])  # сдвиг по Y
-#         rc[2] = height
-#         rc[3] = width
-#         rc[4] = "МГКС " + str(i + 1)
-#         rc[8] = general["set_num"]                       # номер комплекта
-#         rc[12] = str(i + 1)                              # номер РЦ
-#
-#         if i + 1 not in [1, info["num"]]:
-#             # настройка небоковых РЦ
-#             rc[11] = str(int(general["reserved"]))       # резервирование
-#         elif i + 1 == info["num"]:
-#             # настройка увязки конечной РЦ
-#             rc[9] = "64"
-#             rc[13] = "2"
-#         elif i == 0:
-#             # настройка увязки начальной РЦ
-#             if general["interface"]:
-#                 # цифровой интерфейс
-#                 rc[13] = "3"
-#             else:
-#                 # релейный интерфейс
-#                 rc[13] = "1"
-#
-#
-#     return "None"
+def _generate_mgks(info, general, coordinates):
+    """
+    Функция генерации МГКС.
+    :param info: dict
+        данные о аттрибутах рельсовых МГКС необходимые для их отрисовки(width, height etc.)
+    :param general: dict
+        общие сведения о перегоне
+    :param coordinates: dict
+        координаты начал рельсовых цепей для задания координат МГКС
+
+    :return: список, содержащий результат генерации МГКС
+    """
+
+    # проверка на наличие МГКС
+    if info["num"] <= 0:
+        return []
+
+    # генерация  координат МГКС
+    # ----------------------------------------------------------------------------------------------------
+    # сдвиги и конечные координаты МКРЦ в зависимости от направления перегона
+    if general["direct"] == 0:
+        start_rc_shift = 1         # свиг стартового РЦ
+        end_rc = len(coordinates)  # последняя РЦ
+    else:
+        start_rc_shift = 0         # свиг стартового РЦ
+        end_rc = -1                # предпоследняя РЦ
+
+    # генерация координат МКРЦ в зависимости от паттерна их расположения
+    if info["pattern"] == 0:  # паттерн - "через одну РЦ"
+
+        # второй слой накладывается на пропуски первого
+        first_layer_start = info["start_rc"] + start_rc_shift            # 1-ое РЦ : |1 или 0|
+        second_layer_start = int(not info["start_rc"]) + start_rc_shift  # 1-ое РЦ : |0 или 1|
+
+        mgks_coordinates = coordinates[first_layer_start:end_rc:2] + coordinates[second_layer_start:end_rc:2]
+    else:  # паттерн - "подряд"
+
+        start_rc = start_rc_shift + info["start_rc"]  # 1-ое РЦ
+        mgks_coordinates = coordinates[start_rc:end_rc]
+
+    mgks_coordinates = list(map(int, mgks_coordinates[:info["num"]]))
+    # ----------------------------------------------------------------------------------------------------
+
+    # список для хранения МГКС
+    generated_mgks = []
+    for i, coordinate_x in enumerate(mgks_coordinates):
+
+        # инициализация временной переменой МГКС для шага генерации
+        mgks = ['0', '0', '0', '0', '0', '1', '1', '1', '0', '0', '0', '0', '']
+
+        # запись параметров МГКС
+        mgks[0] = str(general["coordinates"][1] + info["upper_margin"])  # координта по Y
+        shift_x = round(int(info["width"]) / 2)
+        mgks[1] = str(coordinate_x - shift_x)     # координта по X
+        mgks[2] = info["height"]
+        mgks[3] = info["width"]
+        mgks[4] = "МГКС " + str(i + 1)            # наименование
+        mgks[9] = general["set_num"]              # номер комплекта
+        mgks[10] = str(i + 1)                     # номер МГКС
+        mgks[11] = str(int(general["reserved"]))  # резервирование
+
+        generated_mgks.append(';'.join(mgks))
+
+    return generated_mgks
 
 
-def _generate_uksps(info):
-    return None
+def _generate_arrow(info, general, first_rc):
+    # проверка: требуется стрелка или нет
+    if not info["exists"]:
+        return [], int(first_rc[3])
 
+    # преобразование от строки к массиву
+    first_rc = first_rc.split(';')
 
-def _generate_arrow(info):
-    return None
+    # инициализация переменой стрелки
+    arrow = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '']
+
+    # координта по Y
+    arrow[0] = str(general["coordinates"][1] - int(info["height"]) - info["lower_margin"])
+
+    # центрирование стрелки относительно 1-ой РЦ
+    print(int(first_rc[3]), int(info["width"]))
+    differ = int(first_rc[3]) - int(info["width"])
+    shift_x = round((differ / 2))
+    arrow[1] = str(int(first_rc[1]) + shift_x)   # координта по X
+
+    arrow[2] = info["height"]
+    arrow[3] = info["width"]
+    arrow[7] = general["set_num"]      # номер комплекта
+    arrow[8] = str(general["direct"])  # направление
+
+    if general["direct"] == 0:
+        ind_start = int(arrow[1]) + int(info["width"])
+    else:
+        ind_start = int(arrow[1])
+
+    return [';'.join(arrow)], ind_start
 
 
 def _generate_ind(info):
+    return None
+
+
+def _generate_uksps(info):
     return None
 
 
