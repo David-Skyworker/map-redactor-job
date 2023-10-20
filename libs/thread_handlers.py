@@ -10,6 +10,10 @@ class GenHandler(QThread):
         super().__init__()
         self.info = info
 
+        self.nums = {"rc": 5, "mkrc": 3, "mgks": 4, "arrow": 2}
+        self.names = {"rc": "PerRC", "mkrc": "MKRCenter", "mgks": "MGKSexit",
+                      "arrow": "Arrow"}
+
     def __del__(self):
         self.wait()
         self.exit()
@@ -24,34 +28,41 @@ class GenHandler(QThread):
         # сохранение обновленных данных в файл
         self.save_config()
 
-    def write(self, elements):
+    def write(self, elements_data):
+        # инициализация информационного поля модуля "StationPlan"
+        info = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '']
 
+        # проверка наличия модуля "StationPlan" в .INI файле
+        # -------------------------------------------------------------------------
         if "StationPlan" in config.file_data:
-            info = config.file_data["StationPlan"]["INITinfo"].split(';')
+            if "INITinfo" in config.file_data["StationPlan"]:
+                info = config.file_data["StationPlan"]["INITinfo"].split(';')
+            else:
+                config.file_data["StationPlan"]["INITinfo"] = ';'.join(info)
         else:
             config.file_data["StationPlan"] = {}
-            config.file_data["StationPlan"]["INITinfo"] = ""
-            info = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '']
+            config.file_data["StationPlan"]["INITinfo"] = ';'.join(info)
+        # -------------------------------------------------------------------------
 
-        self.write_rc(elements["rc"], info)
-        self.write_mkrc(elements["mkrc"], info)
+        element_names = ["arrow", "rc", "mkrc", "mgks"]
+        for name in element_names:
+            self.write_element(elements_data[name], info, name)
+
         config.file_data["StationPlan"]["INITinfo"] = ';'.join(info)
 
-    def write_rc(self, rc_list, info):
-        num = info[5]
-        for i, rc in enumerate(rc_list):
-            num = str(i + int(info[5]) + 1)
-            config.file_data["StationPlan"]["PerRC" + num] = rc
-        else:
-            info[5] = num
+    def write_element(self, elements, info, name):
+        # проверка списка на наличие элементов
+        if not elements:
+            return
 
-    def write_mkrc(self,  mkrc_list, info):
-        num = info[3]
-        for i, mkrc in enumerate(mkrc_list):
-            num = str(i + int(info[5]) + 1)
-            config.file_data["StationPlan"]["MKRCenter" + num] = mkrc
+        info_num = self.nums[name]
+
+        num = info[info_num]
+        for i, rc in enumerate(elements):
+            num = str(i + int(info[info_num]) + 1)
+            config.file_data["StationPlan"][self.names[name] + num] = rc
         else:
-            info[3] = num
+            info[info_num] = num
 
     def save_config(self):
         with open(config.file_path, 'w') as configfile:

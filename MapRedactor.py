@@ -122,15 +122,8 @@ class Window(QMainWindow, Ui_MainWindow):
         rc_info = {"num": int(self.numRcText.text()),
                    "height": self.heightRcText.text(),
                    "width": self.widthRcText.text(),
-                   "first_rc_name": self.comboNameRc.currentText()}
-
-        # ифнформация об МГКС, считанная из пользовательского интерфейса
-        gen_info = {"num": int(self.numGenText.text()),
-                    "height": int(self.heightGenText.text()),
-                    "width": int(self.widthGenText.text()),
-                    "upper_margin": int(self.marginGenText.text()),
-                    "start_rc": self.comboBoxGen.currentIndex(),
-                    "patten": self.comboBoxGenPattern.currentIndex()}
+                   "first_rc_name": self.comboNameRc.currentText(),
+                   "join_start_rc": self.comboBoxContr.currentIndex()}
 
         # ифнформация об МКРЦ, считанная из пользовательского интерфейса
         control_info = {"num": int(self.numContrText.text()),
@@ -139,6 +132,14 @@ class Window(QMainWindow, Ui_MainWindow):
                         "upper_margin": int(self.marginContrText.text()),
                         "start_rc": self.comboBoxContr.currentIndex()}
 
+        # ифнформация об МГКС, считанная из пользовательского интерфейса
+        gen_info = {"num": int(self.numGenText.text()),
+                    "height": self.heightGenText.text(),
+                    "width": self.widthGenText.text(),
+                    "upper_margin": int(self.marginGenText.text()),
+                    "start_rc": self.comboBoxGen.currentIndex(),
+                    "pattern": self.comboBoxGenPattern.currentIndex()}
+
         # ифнформация об УКСПС, считанная из пользовательского интерфейса
         uksps_info = {"num": self.numRcText.text(),
                       "height": self.heightUkspsText.text(),
@@ -146,8 +147,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # ифнформация об стрелке направления, считанная из пользовательского интерфейса
         arrow_info = {"exists": self.checkBoxArrow.isChecked(),
-                      "height": int(self.heightRcText.text()),
-                      "width": int(self.widthRcText.text()),
+                      "height": self.heightArrowText.text(),
+                      "width": self.widthArrowText.text(),
                       "lower_margin": int(self.marginArrowText.text())}
 
         # ифнформация об индификаторах, считанная из пользовательского интерфейса
