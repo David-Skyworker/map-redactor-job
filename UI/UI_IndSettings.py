@@ -15,6 +15,7 @@ class Ui_IndSettings(object):
     def setupUi(self, IndSettings):
         IndSettings.setObjectName("IndSettings")
         IndSettings.resize(256, 238)
+        IndSettings.setModal(True)
         self.buttonIndBox = QtWidgets.QDialogButtonBox(IndSettings)
         self.buttonIndBox.setGeometry(QtCore.QRect(0, 210, 261, 23))
         self.buttonIndBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
