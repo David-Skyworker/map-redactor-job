@@ -95,6 +95,30 @@ class Window(QMainWindow, Ui_MainWindow):
         self.generateButtonAdd.clicked.connect(self.push_generate_button)
     # ---------------------------------------------------------------------
 
+    def calc_start_coordinates(self):
+        x = int(self.spinBoxAbscissa.value())
+        direct = self.comboBoxDirect.currentIndex()
+
+        # при напралении слева направо - установить коорд., заданные пользователем
+        if direct == 0:
+            return x
+
+        # при обратном направелении высчитать необходимый сдвиг начала коорд.
+        elif direct == 1:
+            # данные о ширине были изменены вручную
+            if "rc" in config.details:
+                rc_shift = sum([w for w in config.details["rc"].values()])
+            # все РЦ равны по ширине
+            else:
+                width = int(self.widthRcText.text())
+                rc_num = int(self.numRcText.text())
+                rc_shift = rc_num * width
+
+            # сдвиг заданного начала коорд.
+            shifted_x = x + rc_shift
+
+            return shifted_x
+
     def push_read_button(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(caption="Open File", filter="Config Files (*.ini)")
         if file_name != "":
@@ -106,7 +130,7 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.file_path == "":
             return
 
-        coordinates = (self.spinBoxAbscissa.value(), self.spinBoxOrdinate.value())
+        coordinates = (self.calc_start_coordinates(), int(self.spinBoxOrdinate.value()))
         reserved = self.checkBoxReserv.isChecked()
         direct = self.comboBoxDirect.currentIndex()
         set_num = self.numSetText.text()
