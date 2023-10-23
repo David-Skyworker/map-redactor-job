@@ -1,4 +1,5 @@
 UI/UI_Main.ui
 UI/UI_RcSettings.ui
+UI/UI_IndSettings.ui
 UI/__pycache__/
 libs/__pycache__/
