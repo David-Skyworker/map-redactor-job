@@ -10,9 +10,9 @@ class GenHandler(QThread):
         super().__init__()
         self.info = info
 
-        self.nums = {"rc": 5, "mkrc": 3, "mgks": 4, "arrow": 2}
+        self.nums = {"rc": 5, "mkrc": 3, "mgks": 4, "arrow": 2, "ind": 7}
         self.names = {"rc": "PerRC", "mkrc": "MKRCenter", "mgks": "MGKSexit",
-                      "arrow": "Arrow"}
+                      "arrow": "Arrow", "ind": "Ind"}
 
     def __del__(self):
         self.wait()
@@ -44,7 +44,7 @@ class GenHandler(QThread):
             config.file_data["StationPlan"]["INITinfo"] = ';'.join(info)
         # -------------------------------------------------------------------------
 
-        element_names = ["arrow", "rc", "mkrc", "mgks"]
+        element_names = ["arrow", "rc", "mkrc", "mgks", "ind"]
         for name in element_names:
             self.write_element(elements_data[name], info, name)
 

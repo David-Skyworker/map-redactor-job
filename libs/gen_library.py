@@ -22,9 +22,11 @@ def generate_way(info):
 
     mgks_list = _generate_mgks(info["mgks"], info["general"], rc_coordinates)
 
-    arrow = _generate_arrow(info["arrow"], info["general"], rc_list[0])
+    arrow, ind_start, arrow_height = _generate_arrow(info["arrow"], info["general"], rc_list[0])
 
-    return {"rc": rc_list, "mkrc": mkrc_list, "mgks": mgks_list, "uksps": rc_list, "arrow": arrow, "ind": rc_list}
+    ind_list = _generate_ind(info["ind"], info["general"], ind_start, arrow_height)
+
+    return {"rc": rc_list, "mkrc": mkrc_list, "mgks": mgks_list, "uksps": rc_list, "arrow": arrow, "ind": ind_list}
 
 
 def _adjust_margins(info):
@@ -49,7 +51,7 @@ def _generate_rc(info, general):
     :return: список, содержащий результат генерации РЦ и список координат РЦ
     """
 
-    if "rc" in config.details:
+    if len(config.details["rc"]) == info["num"]:
         # словарь с именами и длиннами уже создан
         details = config.details["rc"]
     else:
@@ -234,15 +236,15 @@ def _set_rc_mkrc_linking(rc_arrays_list, mkrc_nums):
 
 def _generate_mgks(info, general, coordinates):
     """
-    Функция генерации МГКС.
-    :param info: dict
-        данные о аттрибутах рельсовых МГКС необходимые для их отрисовки(width, height etc.)
-    :param general: dict
-        общие сведения о перегоне
-    :param coordinates: dict
-        координаты начал рельсовых цепей для задания координат МГКС
+        Функция генерации МГКС.
+        :param info: dict
+            данные о аттрибутах рельсовых МГКС необходимые для их отрисовки(width, height etc.)
+        :param general: dict
+            общие сведения о перегоне
+        :param coordinates: dict
+            координаты начал рельсовых цепей для задания координат МГКС
 
-    :return: список, содержащий результат генерации МГКС
+        :return: список, содержащий результат генерации МГКС
     """
 
     # проверка на наличие МГКС
@@ -299,21 +301,33 @@ def _generate_mgks(info, general, coordinates):
 
 
 def _generate_arrow(info, general, first_rc):
-    # проверка: требуется стрелка или нет
-    if not info["exists"]:
-        return [], int(first_rc[3])
+
+    """
+    Функция генерации стрелы направления.
+    :param info: dict
+        данные о аттрибутах рельсовых стрелы направления необходимые для ее отрисовки(width, height etc.)
+    :param general: dict
+        общие сведения о перегоне
+    :param first_rc: dict
+        координаты начал рельсовых цепей для задания координат МГКС
+
+    :return: список, содержащий результат генерации МГКС
+    """
 
     # преобразование от строки к массиву
     first_rc = first_rc.split(';')
+
+    # проверка: требуется стрелка или нет
+    if not info["exists"]:
+        return [], int(first_rc[3])
 
     # инициализация переменой стрелки
     arrow = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '']
 
     # координта по Y
-    arrow[0] = str(general["coordinates"][1] - int(info["height"]) - info["lower_margin"])
+    arrow[0] = str(general["coordinates"][1] - int(info["height"]) - general["indicator_arrow_margin"])
 
     # центрирование стрелки относительно 1-ой РЦ
-    print(int(first_rc[3]), int(info["width"]))
     differ = int(first_rc[3]) - int(info["width"])
     shift_x = round((differ / 2))
     arrow[1] = str(int(first_rc[1]) + shift_x)   # координта по X
@@ -324,15 +338,63 @@ def _generate_arrow(info, general, first_rc):
     arrow[8] = str(general["direct"])  # направление
 
     if general["direct"] == 0:
-        ind_start = int(arrow[1]) + int(info["width"])
+        ind_start = int(arrow[1]) + int(info["width"]) + 5
     else:
-        ind_start = int(arrow[1])
+        ind_start = int(arrow[1]) - 5
 
-    return [';'.join(arrow)], ind_start
+    return [';'.join(arrow)], ind_start, int(info["height"])
 
 
-def _generate_ind(info):
-    return None
+def _generate_ind(info, general, ind_start, arrow_height):
+    """
+            Функция генерации индикаторов.
+            :param info: dict
+                данные о аттрибутах индикаторов необходимые для их отрисовки(width, height etc.)
+            :param general: dict
+                общие сведения о перегоне
+            :param ind_start: int
+                координаты начала индификаторов
+            :param arrow_width: int
+                высота стрелки для центрирования индикаторов относительно нее
+
+            :return: список, содержащий результат генерации МГКС
+        """
+
+    # проверка на наличие индикаторов
+    if not sum(config.details["ind"].values()):
+        return []
+
+    # генерация  координат индикаторов
+    # ----------------------------------------------------------------------------------------------------
+    # сдвиги и конечные координаты индикаторов в зависимости от направления перегона
+    ind_num = sum(config.details["ind"].values())  # число индикаторов
+    shift = int(info["width"])
+    if general["direct"] == 0:
+        ind_coordinates = [ind_start + shift * i for i in range(ind_num)]
+    elif general["direct"] == 1:
+        ind_coordinates = [ind_start - shift * (i + 1) for i in range(ind_num)]
+    # ----------------------------------------------------------------------------------------------------
+
+    ind_nums = [str(i + 1) for i, val in enumerate(config.details["ind"].values()) if val]
+    # список для хранения МГКС
+    generated_inds = []
+    for num, coordinate_x in zip(ind_nums, ind_coordinates):
+        # инициализация временной переменой индикатора для шага генерации
+        ind = ['0', '0', '0', '0', '0', '0', '']
+
+        # запись параметров МГКС
+        height = int(info["height"])
+        arrow_center_alignment = round((arrow_height - height) / 2) + height
+        ind[0] = str(general["coordinates"][1] - general["indicator_arrow_margin"] - arrow_center_alignment)  # координта по Y
+        ind[1] = str(coordinate_x)  # координта по X
+        ind[2] = info["height"]
+        ind[3] = info["width"]
+        ind[4] = num                # номер, соответствующий значению индикатора
+        ind[5] = general["set_num"]  # номер комплекта
+
+        generated_inds.append(';'.join(ind))
+
+    return generated_inds
 
 
 def _generate_uksps(info):
