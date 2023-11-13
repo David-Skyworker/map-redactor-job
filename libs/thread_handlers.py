@@ -2,7 +2,7 @@ from PyQt5.QtCore import QThread
 import configparser
 
 from libs import config
-from libs.gen_library import generate_way
+from libs.gen_library_2 import generate_way
 
 
 class GenHandler(QThread):

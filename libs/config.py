@@ -9,9 +9,8 @@ default_element_params = {
 
 file_path = ""
 file_data = None
-rewrite_generation = False
 
-rc_defualt = {}
+rc_default = {}
 ind_default = {'ОТПР': True, 'ИП1': True, 'ИП2': True, 'КП': True, 'БП': True,
                'КК': True, 'БИП1': True, 'БИП2': False, 'ИП3': False}
 

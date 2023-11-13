@@ -3,10 +3,8 @@ from UI.UI_RcSettings import Ui_RcDialog
 from UI.UI_IndSettings import Ui_IndSettings
 from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QDialog
 from PyQt5 import QtWidgets
-from PyQt5.uic import loadUi
 
 import sys
-import os
 from libs import config
 from libs.thread_handlers import ReadHandler, GenHandler
 
@@ -19,6 +17,7 @@ class IndWindow(QDialog, Ui_IndSettings):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setFixedSize(self.size())
 
         # ссылки и имена настроек индикаторов
         self.names = ["ОТПР", "ИП1", "ИП2", "КП", "БП", "КК", "БИП1", "БИП2", "ИП3"]
@@ -77,6 +76,7 @@ class RcWindow(QDialog, Ui_RcDialog):
     def __init__(self, rc_name, rc_num, width):
         super().__init__()
         self.setupUi(self)
+        self.setFixedSize(self.size())
 
         self.letter = rc_name[0]
         self.val = int(rc_name[1])
@@ -94,7 +94,7 @@ class RcWindow(QDialog, Ui_RcDialog):
         if len(config.details["rc"]) == self.rc_num:
             self.load_data()
         else:
-            self.set_data(self.rc_num, width)
+            self.set_new_data(self.rc_num, width)
 
         # show the window
         self.show()
@@ -137,11 +137,9 @@ class Window(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setFixedSize(self.size())
         # подключение функций для нажатых кнопок в части программы для генерации новых путей
         self.add_generate_action()
-
-        # данные
-        self.rc_widths = None
 
         # show the window
         self.show()
@@ -169,15 +167,14 @@ class Window(QMainWindow, Ui_MainWindow):
             print("in")
             # данные о ширине были изменены вручную
             rc_num = int(self.numRcText.text())
-            if "rc" in config.details == rc_num:
-                rc_shift = sum([w for w in config.details["rc"].values()])
+            if len(config.details["rc"]) == rc_num:
+                rc_shift = sum([int(width) for width in config.details["rc"].values()])
             # все РЦ равны по ширине
             else:
                 width = int(self.widthRcText.text())
                 rc_shift = rc_num * width
 
             shifted_x = x + rc_shift
-            print(shifted_x)
             return shifted_x
 
     def push_read_button(self):
