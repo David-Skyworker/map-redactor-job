@@ -8,6 +8,7 @@ default_element_params = {
                           "UKSPS": ['630', '1064', '20', '20', '', '', '1', '1', '0', '0', '0', '0', '0', '0', '0', '0', '']}
 
 file_path = ""
+last_modified_date = None
 file_data = None
 
 rc_default = {}

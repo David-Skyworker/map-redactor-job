@@ -1,5 +1,8 @@
 from PyQt5.QtCore import QThread
+from PyQt5 import QtCore
 import configparser
+import time
+import os
 
 from libs import config
 from libs.gen_library_2 import generate_way
@@ -7,7 +10,7 @@ from libs.gen_library_2 import generate_way
 
 class GenHandler(QThread):
     def __init__(self, info, parent=None):
-        super().__init__()
+        super().__init__(parent=parent)
         self.info = info
 
         self.nums = {"rc": 5, "mkrc": 3, "mgks": 4, "arrow": 2, "ind": 7}
@@ -66,24 +69,67 @@ class GenHandler(QThread):
 
     def save_config(self):
         with open(config.file_path, 'w') as configfile:
-            config.file_data.write(configfile)
+            config.file_data.write(configfile, space_around_delimiters=False)
 
 
 class ReadHandler(QThread):
-    def __init__(self, file_path, parent=None):
-        super().__init__()
-        self.file_path = file_path
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.file_path = config.file_path
 
     def __del__(self):
         self.wait()
         self.exit()
 
     def run(self):
-        config.file_path = self.file_path
-        config.file_data = self.read()
+        self.read_config()
 
-    def read(self):
-        c = configparser.ConfigParser()
+    def read_config(self):
+        c = configparser.ConfigParser(comment_prefixes='/', allow_no_value=True)
         c.optionxform = lambda option: option
         c.read(self.file_path)
-        return c
+        config.file_data = c
+
+
+class FileChecker(QThread):
+    gone_file_signal = QtCore.pyqtSignal()
+    modified_file_signal = QtCore.pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.counter = 0
+
+    def __del__(self):
+        self.wait()
+        self.exit()
+
+    def run(self) -> None:
+        while self.is_changes_found():
+            self.counter += 1
+            print(self.counter)
+            time.sleep(.5)
+        else:
+            self.indentify_file_changes_and_notify()
+
+    def is_changes_found(self):
+        return not(self.is_file_gone() or self.is_file_modified())
+
+    def indentify_file_changes_and_notify(self):
+        if self.is_file_gone():
+            self.gone_file_signal.emit()
+        if self.is_file_modified():
+            print("in modified")
+            self.modified_file_signal.emit()
+
+    def is_file_gone(self):
+        return not os.path.exists(config.file_path)
+
+    def is_file_modified(self):
+        try:
+            modified = config.last_modified_date != time.ctime(os.path.getmtime(config.file_path))
+            print(config.last_modified_date, time.ctime(os.path.getmtime(config.file_path)))
+        except FileNotFoundError:
+            modified = False
+        print(modified)
+        return modified
+

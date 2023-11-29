@@ -52,8 +52,8 @@ def _generate_rc(info, general):
     """
 
     # словарь с именами и длиннами уже создан
-    rc_names = config.details["rc"][0]
-    rc_widths = config.details["rc"][1]
+    rc_names = config.details["rc"]["name"]
+    rc_widths = config.details["rc"]["width"]
 
     # генерация сдвигов рельсовых цепей в относительно начальной точки зависимости от напраления
     if general["direct"] == 0:
@@ -260,18 +260,19 @@ def _generate_mgks(info, general, coordinates):
 
     # генерация координат МКРЦ в зависимости от паттерна их расположения
 
-    shift = int(not info["start_rc"])
+    shift_layer_1 = int(not info["start_rc"])
+    shift_layer_2 = int(info["start_rc"])
     if info["pattern"]:  # паттерн - "подряд"
 
-        start_rc = start_rc_shift + shift  # 1-ое РЦ
+        start_rc = start_rc_shift + shift_layer_1  # 1-ое РЦ
         mgks_coordinates = coordinates[start_rc:end_rc]
 
     else:  # паттерн - "через одну РЦ"
 
         # второй слой накладывается на пропуски первого
 
-        first_layer_start = shift + start_rc_shift            # 1-ое РЦ : |1 или 0|
-        second_layer_start = shift + start_rc_shift  # 1-ое РЦ : |0 или 1|
+        first_layer_start = shift_layer_1 + start_rc_shift            # 1-ое РЦ : |1 или 0|
+        second_layer_start = shift_layer_2 + start_rc_shift  # 1-ое РЦ : |0 или 1|
 
         mgks_coordinates = coordinates[first_layer_start:end_rc:2] + coordinates[second_layer_start:end_rc:2]
 

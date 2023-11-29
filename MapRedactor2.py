@@ -1,14 +1,19 @@
 from UI.UI_Main_2 import Ui_MainWindow
-from UI.UI_RcSettings import Ui_RcDialog
-from UI.UI_IndSettings import Ui_IndSettings
 from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QDialog, QButtonGroup, QMessageBox
 from PyQt5 import QtWidgets
 
-import re
 import sys
+import os
+import time
+
 from libs import config
-from libs.thread_handlers import ReadHandler, GenHandler
-from libs.utilities import TableContent
+from libs.thread_handlers import ReadHandler, GenHandler, FileChecker
+from utilities.interface_utilities import EventListener, WindowView
+from utilities.content_utilities import TableContent, IndicatorConfig
+from utilities.validators import RcNameValidator
+from utilities.messages import TableTypoMessage, NoFileMessage, FileGoneMessage, FileChangedMessage
+from utilities.messages import UnfinishedChangeMessage
+
 
 MKRC_TAB_ID = 2
 MGKS_TAB_ID = 3
@@ -27,6 +32,12 @@ RC_WIDTH_ID = 1
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        self.setupUi(self)
+        self.start_name_validator = RcNameValidator(self)
+        # self.file_checker = FileChecker()
+        self.rc_table = TableContent(self)
+        self.indicators = IndicatorConfig(self)
+
         # поля для работы с данными интерфейса
         self.info = {"general": dict(),
                      "rc": dict(),
@@ -37,160 +48,25 @@ class Window(QMainWindow, Ui_MainWindow):
                      "ind": dict()}
 
         # ----------------------------------------------------------------------
-        # индикаторы
-        self.indicator_names = None
-        self.indicator_links = None
 
-        # РЦ
-        self.rc_start_name = "Ч1П"
-        self.rc_index_pattern = INCREASE_MODE
-        self.rc_number = 2
-        self.rc_width = 40
-        self.rc_content = None
-        # ----------------------------------------------------------------------
-
-        self.setupUi(self)
         self.setFixedSize(self.size())
 
         # группы для радио кнопок
         self.radio_name_group = QButtonGroup()
 
-        self.set_radio_button_listeners()
-        self.set_button_listeners()
-        self.set_change_event_listeners()
+        # установка слушателей событий и сигналов
+        EventListener(self).set_window_event_linking()
 
         self.set_default_ui_view()
 
         # show the window
         self.show()
 
-    # секция установки связи слушателей событий
-    # ---------------------------------------------------------------------
-    def set_radio_button_listeners(self):
-        # установка наименования РЦ
-        self.radio_name_group.addButton(self.radioNameChoose, 0)
-        self.radio_name_group.addButton(self.radioNameCustome, 1)
-        self.radio_name_group.idClicked.connect(self.change_name_mode_settings)
-
-    def set_button_listeners(self):
-        self.openButtonAdd.clicked.connect(self.push_read_button)
-        self.generateButtonAdd.clicked.connect(self.push_generate_button)
-
-    def set_change_event_listeners(self):
-        # появление/скрытие вкладок
-        self.numContrSpin.valueChanged.connect(self.on_change_mkrc_number)
-        self.numGenSpin.valueChanged.connect(self.on_change_mgks_number)
-
-        # смена имени РЦ на визуализации
-        self.comboNameRc.currentIndexChanged.connect(self.set_name_chosen_name)
-        self.customNameRcEdit.textChanged.connect(self.set_name_customed_name)
-
-        # обновлении РЦ таблицы
-        self.numRcSpin.editingFinished.connect(self.check_and_update_table_content)
-        self.widthRcSpin.valueChanged.connect(self.check_and_update_table_content)
-        self.horizontalRcSlider.sliderReleased.connect(self.check_and_update_table_content)
-        self.horizontalRcSlider.valueChanged.connect(self.check_and_update_table_content)
-        self.comboNameRc.currentTextChanged.connect(self.check_and_update_table_content)
-        self.customNameRcEdit.editingFinished.connect(self.check_and_update_table_content)
-        self.comboIndexNamePatter.currentIndexChanged.connect(self.check_and_update_table_content)
-
-        # смена вкладок
-        self.tabGenerateSettings.currentChanged.connect(self.lose_focus)
-
-        # изменение геометрии РЦ
-        self.widthRcSpin.valueChanged.connect(self.change_rc_geometry)
-        self.horizontalRcSlider.valueChanged.connect(self.change_rc_geometry)
-        self.heightRcSpin.valueChanged.connect(self.change_rc_geometry)
-        self.verticalRcSlider.valueChanged.connect(self.change_rc_geometry)
-
-        # изменение геометрии МКРЦ
-        self.widthControlSpin.valueChanged.connect(self.change_mkrc_geometry)
-        self.horizontalControlSlider.valueChanged.connect(self.change_mkrc_geometry)
-        self.heightControlSpin.valueChanged.connect(self.change_mkrc_geometry)
-        self.verticalControlSlider.valueChanged.connect(self.change_mkrc_geometry)
-
-        # изменение геометрии МГКС
-        self.widthGenlSpin.valueChanged.connect(self.change_mgks_geometry)
-        self.horizontalGenSlider.valueChanged.connect(self.change_mgks_geometry)
-        self.heightGenSpin.valueChanged.connect(self.change_mgks_geometry)
-        self.verticalGenSlider.valueChanged.connect(self.change_mgks_geometry)
-
-        # изменение геометрии стрелки
-        self.widthArrowlSpin.valueChanged.connect(self.change_arrow_geometry)
-        self.horizontalArrowSlider.valueChanged.connect(self.change_arrow_geometry)
-        self.heightArrowSpin.valueChanged.connect(self.change_arrow_geometry)
-        self.verticalArrowSlider.valueChanged.connect(self.change_arrow_geometry)
-
-        # изменение геометрии индикаторов
-        self.widthIndlSpin.valueChanged.connect(self.change_ind_geometry)
-        self.horizontalIndSlider.valueChanged.connect(self.change_ind_geometry)
-        self.heightIndSpin.valueChanged.connect(self.change_ind_geometry)
-        self.verticalIndSlider.valueChanged.connect(self.change_ind_geometry)
-
-
-    # ---------------------------------------------------------------------
-
     # секция настройки начальной кастомизации приложения
     # ---------------------------------------------------------------------
 
     def set_default_ui_view(self):
-        self.set_tabs_visibility_off()
-        self.set_rc_table()
-        self.set_default_indicators()
-
-    def set_tabs_visibility_off(self):
-        self.tabGenerateSettings.setTabVisible(MKRC_TAB_ID, False)
-        self.tabGenerateSettings.setTabVisible(MGKS_TAB_ID, False)
-        self.tabGenerateSettings.setTabVisible(UKSPS_TAB_ID, False)
-
-    def set_rc_table(self):
-        self.set_column_widths()
-        self.set_table_default_content()
-
-    def set_column_widths(self):
-        self.tableWidget.setColumnWidth(RC_NAME_ID, 115)
-        self.tableWidget.setColumnWidth(RC_WIDTH_ID, 100)
-
-    def set_table_default_content(self):
-        self.set_default_row_number()
-        self.set_default_content()
-
-    def set_default_row_number(self):
-        default_row_number = 2
-        self.tableWidget.setRowCount(default_row_number)
-
-    def set_default_content(self):
-        rc_names = ["НАЧАЛО", "КОНЕЦ"]
-
-        for i, name in enumerate(rc_names):
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(name))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem("40"))
-
-    def set_default_indicators(self):
-        self.get_indicator_links_and_names()
-        self.set_default_configuration()
-
-    def get_indicator_links_and_names(self):
-        # ссылки и имена настроек индикаторов
-        self.indicator_names = ["ОТПР", "ИП1", "ИП2", "КП", "БП", "КК", "БИП1", "БИП2", "ИП3"]
-        self.indicator_links = [self.checkIndDepartureBox,
-                                self.checkIndOncomingBox_1,
-                                self.checkIndOncomingBox_2,
-                                self.checkIndOccupationBox_1,
-                                self.checkIndOccupationBox_2,
-                                self.checkIndKKBox,
-                                self.checkIndDistanceBox_1,
-                                self.checkIndDistanceBox_2,
-                                self.checkIndOncomingBox_3]
-
-    def set_default_configuration(self):
-        default_indicator_configuration = config.details["ind"].values()
-
-        for indicator_number, is_included in enumerate(default_indicator_configuration):
-            self.set_indicator_state(indicator_number, is_included)
-
-    def set_indicator_state(self, number, is_included):
-        self.indicator_links[number].setChecked(is_included)
+        WindowView(self).set_default_ui_view()
 
     # ---------------------------------------------------------------------
 
@@ -200,10 +76,10 @@ class Window(QMainWindow, Ui_MainWindow):
     def change_name_mode_settings(self, radio_id):
         if radio_id == NAME_CHOOSE_ID:
             self.set_choose_rc_name_mode()
-            self.update_table_content()
+            self.rc_table.reset_name_column()
         if radio_id == NAME_CUSTOM_ID:
             self.set_custom_rc_name_mode()
-            self.check_and_update_table_content()
+            self.check_and_reset_name_column()
 
     def set_choose_rc_name_mode(self):
         self.set_choose_button_available()
@@ -237,16 +113,51 @@ class Window(QMainWindow, Ui_MainWindow):
 
     # ---------------------------------------------------------------------
 
+    # file monitoring events
+    # ---------------------------------------------------------------------
+    def inform_and_remove_file_data(self):
+        self.send_message_file_gone()
+        self.clear_config_and_interface_file_data()
+
+    def send_message_file_gone(self):
+        FileGoneMessage()
+
+    def clear_config_and_interface_file_data(self):
+        self.setWindowTitle("MapRedactor")
+        config.file_path = ""
+        config.last_modified_date = None
+        config.file_data = None
+
+    def inform_and_offer_data_update(self):
+        answer = FileChangedMessage()
+        if answer.is_reset_file:
+            self.read_file(config.file_path)
+    # ---------------------------------------------------------------------
+
     # push button event listeners and connected func
     # ---------------------------------------------------------------------
     def push_read_button(self):
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(caption="Open File", filter="Config Files (*.ini)")
         if file_path != "":
-            config.file_data = None
-            file_name = file_path.split('/')[-1]
-            file_path = file_path.replace('/', '\\')
-            self.setWindowTitle("MapRedactor: " + file_name)
-            ReadHandler(file_path).start()
+            self.read_file(file_path)
+
+    def read_file(self, file_path):
+        self.prepare_config_path_and_data(file_path)
+        self.set_main_window_title()
+        self.set_read_and_check_workers()
+
+    def prepare_config_path_and_data(self, path):
+        config.file_data = None
+        config.file_path = path.replace('\\', '/')
+        config.last_modified_date = time.ctime(os.path.getmtime(config.file_path))
+
+    def set_main_window_title(self):
+        new_title = config.file_path.split('\\')[-1]
+        self.setWindowTitle("MapRedactor: " + new_title)
+
+    def set_read_and_check_workers(self):
+        ReadHandler().start()
+        # self.file_checker.start()
 
     def push_generate_button(self):
         if not self.is_rc_editing_finished():
@@ -258,6 +169,7 @@ class Window(QMainWindow, Ui_MainWindow):
             return
 
         if self.is_file_choosen():
+            # self.pause_file_checker()
             self.do_generation()
         else:
             self.send_message_no_file()
@@ -267,40 +179,37 @@ class Window(QMainWindow, Ui_MainWindow):
         return is_tabel_updated
 
     def send_message_unfinished(self):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
-        msg.setText("Ошибка подготовки генерации!" + "\t" * 4)
-        msg.setInformativeText("Генерация не началась, проверьте правильность\nнаименования первой рельсовой цепи!")
-        msg.setWindowTitle("Ошибка")
-        msg.exec_()
+        UnfinishedChangeMessage()
 
     def is_table_has_typo(self):
-        row_number = self.tableWidget.rowCount()
-        return not all([self.tableWidget.item(row, 1).text().isdigit() for row in range(row_number)])
+        self.rc_table.is_edited_correctly()
 
     def send_message_typo(self):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
-        msg.setText("Ошибка подготовки генерации!" + "\t" * 4)
-        msg.setInformativeText('Генерация не началась, найдена опечатка при заполнении\nтаблицы, столбец "Длинна"!')
-        msg.setWindowTitle("Ошибка")
-        msg.exec_()
+        TableTypoMessage()
 
     def is_file_choosen(self):
         return config.file_path != ""
 
+    def pause_file_checker(self):
+        self.file_checker.quit()
+        # TODO: complete checker pause logic
+
     def do_generation(self):
-        self.get_input_data()
         self.send_content_to_config()
+        self.get_input_data()
         self.send_data_to_generate_thread()
 
-    def send_message_no_file(self):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
-        msg.setText("Ошибка подготовки генерации!" + "\t" * 2)
-        msg.setInformativeText('Генерация не началась, файл для записи\nне был выбран!')
-        msg.setWindowTitle("Ошибка")
-        msg.exec_()
+    def send_content_to_config(self):
+        self.send_indicators_content()
+        self.send_rc_content()
+
+    def send_indicators_content(self):
+        indicator_configuration = self.indicators.get()
+        config.details["ind"] = indicator_configuration
+
+    def send_rc_content(self):
+        rc_content = self.rc_table.get()
+        config.details["rc"] = rc_content
 
     def get_input_data(self):
 
@@ -337,12 +246,12 @@ class Window(QMainWindow, Ui_MainWindow):
         # при обратном направелении высчитать необходимый сдвиг начала коорд.
         elif direct == 1:
             # данные о ширине были изменены вручную
-            rc_num = int(self.numRcText.text())
+            rc_num = self.numRcSpin.value()
             if len(config.details["rc"]) == rc_num:
                 rc_shift = sum([int(width) for width in config.details["rc"].values()])
             # все РЦ равны по ширине
             else:
-                width = int(self.widthRcText.text())
+                width = self.widthRcSpin.value()
                 rc_shift = rc_num * width
 
             shifted_x = x + rc_shift
@@ -389,22 +298,11 @@ class Window(QMainWindow, Ui_MainWindow):
                             "width": self.widthIndlSpin.value(),
                             "ind_arrow_margin": self.marginIndSpin.value()}
 
-    def send_content_to_config(self):
-        self.send_indicators_content()
-        self.send_rc_content()
-
-    def send_indicators_content(self):
-        indicators = {name: checkbox.isChecked() for name, checkbox in zip(self.indicator_names, self.indicator_links)}
-        config.details["ind"] = indicators
-
-    def send_rc_content(self):
-        row_number = self.tableWidget.rowCount()
-        names = [self.tableWidget.item(row, 0).text() for row in range(row_number)]
-        widths = [int(self.tableWidget.item(row, 1).text()) for row in range(row_number)]
-        config.details["rc"] = {0: names, 1: widths}
-
     def send_data_to_generate_thread(self):
         GenHandler(self.info).start()
+
+    def send_message_no_file(self):
+        NoFileMessage()
 
     # ---------------------------------------------------------------------
 
@@ -516,64 +414,18 @@ class Window(QMainWindow, Ui_MainWindow):
         self.verticalIndSlider.setValue(new_value)
 
     def check_and_update_table_content(self):
-        if self.is_name_appropriate():
-            self.update_table_content()
+        if self.start_name_validator.is_valid():
+            self.rc_table.set_new_content()
 
-    def is_name_appropriate(self):
-        is_custom_name = self.radioNameCustome.isChecked()
-        pattern = r'.*[ЧН]\d{1,2}П'
-        name = self.customNameRcEdit.text()
-        is_name_appropriate = re.fullmatch(pattern, name) is not None
+    def check_and_reset_name_column(self):
+        if self.start_name_validator.is_valid():
+            self.rc_table.reset_name_column()
 
-        return is_custom_name and is_name_appropriate or not is_custom_name
-
-    def update_table_content(self):
-        self.clear_table()
-        self.generate_table_content()
-        self.set_table_content()
-
-    def clear_table(self):
-        while self.tableWidget.rowCount() > 0:
-            self.tableWidget.removeRow(0)
-
-    def generate_table_content(self):
-        self.get_generative_parameters()
-        self.save_table_content()
-
-    def get_generative_parameters(self):
-        self.rc_number = self.numRcSpin.value()
-        self.rc_width = self.widthRcSpin.value()
-
-        is_choose_name_mode = self.radioNameChoose.isChecked()
-        if is_choose_name_mode:
-            self.rc_start_name = self.comboNameRc.currentText()
-            self.rc_index_pattern = INCREASE_MODE
-        else:
-            self.rc_start_name = self.customNameRcEdit.text()
-            self.rc_index_pattern = self.comboIndexNamePatter.currentIndex()
-
-    def save_table_content(self):
-        generative_parameters = {"number": self.rc_number,
-                                 "start_name": self.rc_start_name,
-                                 "width": self.rc_width,
-                                 "index_pattern": self.rc_index_pattern}
-        self.rc_content = TableContent(generative_parameters).content
-
-    def set_table_content(self):
-        self.tableWidget.setRowCount(self.rc_number)
-
-        for number, column_contents in self.rc_content.items():
-            self.set_table_column(number, column_contents)
-
-    def set_table_column(self, column, content):
-        for row, cell_content in enumerate(content):
-            self.tableWidget.setItem(row, column, QTableWidgetItem(str(cell_content)))
-
-    def set_name_chosen_name(self):
+    def set_chosen_name(self):
         rc_name = self.comboNameRc.currentText()
         self.rc_name_label.setText(rc_name)
 
-    def set_name_customed_name(self):
+    def set_custom_name(self):
         rc_name = self.customNameRcEdit.text()
         self.rc_name_label.setText(rc_name)
 
