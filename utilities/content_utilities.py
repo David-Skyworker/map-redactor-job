@@ -35,7 +35,6 @@ class TableContent:
         self.content[NAME_COLUMN] = ["НАЧАЛО"] + inner_names + ["КОНЕЦ"]
         self.content[WIDTH_COLUMN] = [width] * rc_number
 
-
     def _set_new_table_content(self):
         self._clear_table()
         self._set_table_content()

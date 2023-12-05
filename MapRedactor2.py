@@ -426,6 +426,10 @@ class Window(QMainWindow, Ui_MainWindow):
         if self.start_name_validator.is_valid():
             self.rc_table.reset_name_column()
 
+    def check_and_reset_width_column(self):
+        if self.start_name_validator.is_valid():
+            self.rc_table.reset_width_column()
+
     def set_chosen_name(self):
         rc_name = self.comboNameRc.currentText()
         self.rc_name_label.setText(rc_name)
