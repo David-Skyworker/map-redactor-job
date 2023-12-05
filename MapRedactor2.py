@@ -31,6 +31,7 @@ RC_WIDTH_ID = 1
 
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self):
+        # new comment
         super().__init__()
         # git new changes
         self.new_test()
