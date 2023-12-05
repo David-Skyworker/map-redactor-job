@@ -17,8 +17,7 @@ class RailWayInfo:
         self._get_general_data()
         self._get_rc_data()
         self._get_mkrc_data()
-
-
+        self._get_mgks_data()
 
     def _get_general_data(self):
         coord_x, coord_y = self.window.spinBoxAbscissa.value(), self.window.spinBoxOrdinate.value()
@@ -40,11 +39,39 @@ class RailWayInfo:
 
     def _get_mkrc_data(self):
         # ифнформация об МКРЦ, считанная из пользовательского интерфейса
-        self.info["mkrc"] = {"num": self.numContrSpin.value(),
-                             "height": self.heightControlSpin.value(),
-                             "width": self.widthControlSpin.value(),
-                             "upper_margin": self.MarginControlSpin.value(),
-                             "start_rc": self.radioConrolStartFirstPattern.isChecked()}
+        self.mkrc_info = MKRCInfo()
+        self.mkrc_info.number = self.window.numContrSpin.value()
+        self.mkrc_info.height = self.window.heightControlSpin.value()
+        self.mkrc_info.width = self.window.widthControlSpin.value()
+        self.mkrc_info.upper_margin = self.window.MarginControlSpin.value()
+        self.mkrc_info.start_rc = self.window.radioConrolStartFirstPattern.isChecked()
+
+    def _get_mgks_data(self):
+        # ифнформация об МГКС, считанная из пользовательского интерфейса
+        self.mgks_info = MGKSInfo()
+        self.mgks_info.number = self.window.numGenSpin.value()
+        self.mgks_info.height = self.window.heightGenSpin.value()
+        self.mgks_info.width = self.window.widthGenlSpin.value()
+        self.mgks_info.upper_margin = self.window.marginGenSpin.value()
+        self.mgks_info.start_rc = self.window.radioGenStartFirstPattern.isChecked()
+        self.mgks_info.pattern = self.window.radioGenDistFirstPattern.isChecked()
+
+    def _get_uksps_data(self):
+        # не реализовано
+        pass
+
+    def _get_arrow_data(self):
+        self.arrow_info = ArrowInfo()
+        self.arrow_info.number = int(self.window.windowcheckBoxArrow.isChecked())
+        self.arrow_info.height = self.window.heightArrowSpin.value(),
+        self.arrow_info.width = self.window.widthArrowlSpin.value()
+
+    def _get_ind_data(self):
+        self.ind_info = IndicatorInfo()
+        self.ind_info.height = self.window.heightIndSpin.value()
+        self.ind_info.width = self.window.widthIndlSpin.value()
+        self.ind_info.ind_arrow_margin = self.window.marginIndSpin.value()
+
 
 class GeneralInfo:
     def __init__(self):
