@@ -86,6 +86,29 @@ class TableContent:
         self.window.tableWidget.setItem(row_number, NAME_COLUMN, QTableWidgetItem(str(name)))
 
     # ---------------------------------------------------------------------
+
+    def reset_width_column(self):
+        self.params.get()
+        self._generate_width_content()
+        self._set_width_table_content()
+
+    def _generate_width_content(self):
+        width = self.params.width
+        rc_number = self.params.rc_number
+
+        widths = [width] * rc_number
+        self.content[WIDTH_COLUMN] = widths
+
+    def _set_width_table_content(self):
+        row_number = self.params.rc_number
+        for index in range(row_number):
+            self._reset_width(index)
+
+    def _reset_width(self, row_number):
+        width = self.content[WIDTH_COLUMN][row_number]
+        self.window.tableWidget.setItem(row_number, WIDTH_COLUMN, QTableWidgetItem(str(width)))
+
+    # ---------------------------------------------------------------------
     def is_edited_correctly(self):
         return TableContentValidator(self.window).is_valid()
 

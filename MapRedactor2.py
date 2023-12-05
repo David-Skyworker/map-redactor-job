@@ -32,6 +32,8 @@ RC_WIDTH_ID = 1
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        # git new changes
+        self.new_test()
         self.setupUi(self)
         self.start_name_validator = RcNameValidator(self)
         # self.file_checker = FileChecker()
@@ -61,6 +63,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # show the window
         self.show()
+
+    def new_test(self):
+        print("New process working...")
 
     # секция настройки начальной кастомизации приложения
     # ---------------------------------------------------------------------

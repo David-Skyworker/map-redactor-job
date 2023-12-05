@@ -49,9 +49,8 @@ class EventListener:
     def _table_content_change(self):
         # обновлении РЦ таблицы
         self.window.numRcSpin.editingFinished.connect(self.window.check_and_update_table_content)
-        self.window.widthRcSpin.valueChanged.connect(self.window.check_and_update_table_content)
-        self.window.horizontalRcSlider.sliderReleased.connect(self.window.check_and_update_table_content)
-        self.window.horizontalRcSlider.valueChanged.connect(self.window.check_and_update_table_content)
+        self.window.widthRcSpin.valueChanged.connect(self.window.check_and_reset_width_column)
+        self.window.horizontalRcSlider.sliderReleased.connect(self.window.check_and_reset_width_column)
         self.window.comboNameRc.currentTextChanged.connect(self.window.check_and_reset_name_column)
         self.window.customNameRcEdit.editingFinished.connect(self.window.check_and_reset_name_column)
         self.window.comboIndexNamePatter.currentIndexChanged.connect(self.window.check_and_reset_name_column)
