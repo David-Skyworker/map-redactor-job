@@ -31,7 +31,9 @@ class RailWayInfo:
         self.general.coordinates = Coordinate(coord_x, coord_y, direction)
         self.general.reserved = self.window.checkBoxReserv.isChecked()
         self.general.direction = direction
+        self.general.interface_type = self.window.comboInterfaceRc.currentIndex()
         self.general.set_number = self.window.setNumSpin.value()
+        self.general.rc_arrow_margin = self.window.marginArrowSpin.value()
 
     def _set_rc_data(self):
         # ифнформация об РЦ, считанная из пользовательского интерфейса
@@ -65,8 +67,8 @@ class RailWayInfo:
 
     def _set_arrow_data(self):
         self.arrow = ArrowInfo()
-        self.arrow.number = int(self.window.windowcheckBoxArrow.isChecked())
-        self.arrow.height = self.window.heightArrowSpin.value(),
+        self.arrow.number = int(self.window.checkBoxArrow.isChecked())
+        self.arrow.height = self.window.heightArrowSpin.value()
         self.arrow.width = self.window.widthArrowlSpin.value()
 
     def _set_ind_data(self):
@@ -99,7 +101,7 @@ class Coordinate:
     @property
     def x(self):
         if self._is_reversed():
-            shift = sum([int(width) for width in config.details["rc"].values()])
+            shift = sum([int(width) for width in config.details["rc"]["width"]])
             return self._x + shift
         return self._x
 
