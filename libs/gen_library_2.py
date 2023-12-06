@@ -6,7 +6,7 @@ from libs import config
 def generate_way(info):
     """
         Функция генерации перегона.
-        :param info: dict
+        :param info:
             словарь, содержащий данные для генерации объектов программой, таких как РЦ, МГКС, МКРЦ и т.д.
 
         :return: словарь, содержащий полную информацию о сгенерированном перегоне в соответствующим формате для
@@ -14,17 +14,17 @@ def generate_way(info):
     """
     _adjust_margins(info)
 
-    rc_list, rc_coordinates, mkrc_shift_y = _generate_rc(info["rc"], info["general"])
+    rc_list, rc_coordinates, mkrc_shift_y = _generate_rc(info.rc, info.general)
 
-    mkrc_list, mkrc_nums = _generate_mkrc(info["mkrc"], info["general"], rc_coordinates)
+    mkrc_list, mkrc_nums = _generate_mkrc(info.mkrc_info, info.general, rc_coordinates)
 
     rc_list = _set_rc_mkrc_linking(rc_list, mkrc_nums)
 
-    mgks_list = _generate_mgks(info["mgks"], info["general"], rc_coordinates)
+    mgks_list = _generate_mgks(info.mgks, info.general, rc_coordinates)
 
-    arrow, ind_start, arrow_height = _generate_arrow(info["arrow"], info["general"], rc_list[0])
+    arrow, ind_start, arrow_height = _generate_arrow(info.arrow, info.general, rc_list[0])
 
-    ind_list = _generate_ind(info["ind"], info["general"], ind_start, arrow_height)
+    ind_list = _generate_ind(info.ind, info.general, ind_start, arrow_height)
 
     return {"rc": rc_list, "mkrc": mkrc_list, "mgks": mgks_list, "uksps": rc_list, "arrow": arrow, "ind": ind_list}
 
@@ -36,10 +36,14 @@ def _adjust_margins(info):
         :param info: dict
             данные о аттрибутах мкрц необходимые для их отрисовки(width, height etc.)
     """
-    mkrc_margin = info["mkrc"]["upper_margin"] + info["rc"]["height"]
-    mgks_margin = info["mgks"]["upper_margin"] + mkrc_margin + info["mkrc"]["height"]
+    mkrc = info.mkrc
+    rc = info.rc
+    mgks = info.mgks
 
-    info["mkrc"]["upper_margin"], info["mgks"]["upper_margin"] = mkrc_margin, mgks_margin
+    mkrc_margin = mkrc.upper_margin + rc.height
+    mgks_margin = mgks.upper_margin + mkrc_margin + mkrc.height
+
+    mkrc.upper_margin, mgks.upper_margin = mkrc_margin, mgks_margin
 
 
 def _generate_rc(info, general):
@@ -56,12 +60,12 @@ def _generate_rc(info, general):
     rc_widths = config.details["rc"]["width"]
 
     # генерация сдвигов рельсовых цепей в относительно начальной точки зависимости от напраления
-    if general["direct"] == 0:
+    if general.direct == 0:
         # слева направо
-        shifts = [0] + [sum(rc_widths[0:i + 1]) for i in range(info["num"] - 1)]
+        shifts = [0] + [sum(rc_widths[0:i + 1]) for i in range(info.num - 1)]
     else:
         # справа налево
-        shifts = [-sum(rc_widths[0:i + 1]) for i in range(info["num"])]
+        shifts = [-sum(rc_widths[0:i + 1]) for i in range(info.num)]
 
     # список для хранения РЦ
     generated_rc = []
@@ -74,19 +78,21 @@ def _generate_rc(info, general):
         rc = ['0', '0', '0', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '']
 
         # запись параметров РЦ
-        rc[0] = general["coordinates"][1]              # сдвиг по Y
-        rc[1] = general["coordinates"][0] + shifts[i]  # сдвиг по X
-        rc[2] = info["height"]
+        coords = general.coordinates
+
+        rc[0] = coords.y              # сдвиг по Y
+        rc[1] = coords.x + shifts[i]  # сдвиг по X
+        rc[2] = info.height
         rc[3] = width
         rc[4] = name
-        rc[8] = general["set_num"]
+        rc[8] = general.set_num
         rc[12] = i + 1                                 # номер рц
 
         # настройка параметров боковых и внутренних РЦ
-        if i + 1 not in [1, info["num"]]:
+        if i + 1 not in [1, info.num]:
             # настройка внутренних РЦ
-            rc[11] = int(general["reserved"])         # резервирование
-        elif i + 1 == info["num"]:
+            rc[11] = int(general.reserved)         # резервирование
+        elif i + 1 == info.num:
             # настройка увязки конечной РЦ
             rc[9] = 64
             rc[13] = 2
