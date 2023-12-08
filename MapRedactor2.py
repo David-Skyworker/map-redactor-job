@@ -13,6 +13,7 @@ from utilities.content_utilities import TableContent, IndicatorConfig
 from utilities.validators import RcNameValidator
 from utilities.messages import TableTypoMessage, NoFileMessage, FileGoneMessage, FileChangedMessage
 from utilities.messages import UnfinishedChangeMessage
+from containers.info_container import RailWayInfo
 
 
 MKRC_TAB_ID = 2
@@ -39,13 +40,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.indicators = IndicatorConfig(self)
 
         # поля для работы с данными интерфейса
-        self.info = {"general": dict(),
-                     "rc": dict(),
-                     "mgks": dict(),
-                     "mkrc": dict(),
-                     "uksps": dict(),
-                     "arrow": dict(),
-                     "ind": dict()}
+        self.info = RailWayInfo(self)
 
         # ----------------------------------------------------------------------
 
@@ -61,8 +56,6 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # show the window
         self.show()
-
-
     # секция настройки начальной кастомизации приложения
     # ---------------------------------------------------------------------
 
@@ -197,7 +190,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def do_generation(self):
         self.send_content_to_config()
-        self.get_input_data()
+        self.info.set()
         self.send_data_to_generate_thread()
 
     def send_content_to_config(self):
@@ -211,93 +204,6 @@ class Window(QMainWindow, Ui_MainWindow):
     def send_rc_content(self):
         rc_content = self.rc_table.get()
         config.details["rc"] = rc_content
-
-    def get_input_data(self):
-
-        self.get_general_data()
-        self.get_rc_data()
-        self.get_mkrc_data()
-        self.get_mgks_data()
-        self.get_uksps_data()
-        self.get_arrow_data()
-        self.get_ind_data()
-
-    def get_general_data(self):
-        coordinates = (self.calc_start_coordinates(), int(self.spinBoxOrdinate.value()))
-        reserved = self.checkBoxReserv.isChecked()
-        direct = self.comboBoxDirect.currentIndex()
-        set_num = self.setNumSpin.value()
-
-        # общая ифнформация о перегоне, считанная из пользовательского интерфейса
-        self.info["general"] = {"coordinates": coordinates,
-                                "reserved": reserved,
-                                "direct": direct,
-                                "set_num": set_num,
-                                "interface": self.comboInterfaceRc.currentIndex(),
-                                "rc_arrow_margin": self.marginArrowSpin.value()}
-
-    def calc_start_coordinates(self):
-        x = int(self.spinBoxAbscissa.value())
-        direct = self.comboBoxDirect.currentIndex()
-
-        # при напралении слева направо - установить коорд., заданные пользователем
-        if direct == 0:
-            return x
-
-        # при обратном направелении высчитать необходимый сдвиг начала коорд.
-        elif direct == 1:
-            # данные о ширине были изменены вручную
-            rc_num = self.numRcSpin.value()
-            if len(config.details["rc"]) == rc_num:
-                rc_shift = sum([int(width) for width in config.details["rc"].values()])
-            # все РЦ равны по ширине
-            else:
-                width = self.widthRcSpin.value()
-                rc_shift = rc_num * width
-
-            shifted_x = x + rc_shift
-            return shifted_x
-
-    def get_rc_data(self):
-        # ифнформация об РЦ, считанная из пользовательского интерфейса
-        self.info["rc"] = {"num": self.numRcSpin.value(),
-                           "height": self.heightRcSpin.value(),
-                           "width": self.widthRcSpin.value()}
-
-    def get_mkrc_data(self):
-        # ифнформация об МКРЦ, считанная из пользовательского интерфейса
-        self.info["mkrc"] = {"num": self.numContrSpin.value(),
-                             "height": self.heightControlSpin.value(),
-                             "width": self.widthControlSpin.value(),
-                             "upper_margin": self.MarginControlSpin.value(),
-                             "start_rc": self.radioConrolStartFirstPattern.isChecked()}
-
-    def get_mgks_data(self):
-        # ифнформация об МГКС, считанная из пользовательского интерфейса
-        self.info["mgks"] = {"num": self.numGenSpin.value(),
-                             "height": self.heightGenSpin.value(),
-                             "width": self.widthGenlSpin.value(),
-                             "upper_margin": self.marginGenSpin.value(),
-                             "start_rc": self.radioGenStartFirstPattern.isChecked(),
-                             "pattern": self.radioGenDistFirstPattern.isChecked()}
-
-    def get_uksps_data(self):
-        # ифнформация об УКСПС, считанная из пользовательского интерфейса
-        self.info["uksps"] = {"num": self.numUkspsSpin.value(),
-                              "height": self.heightUkspsText.text(),
-                              "width": int(self.widthUkspsText.text())}
-
-    def get_arrow_data(self):
-        # ифнформация об стрелке направления, считанная из пользовательского интерфейса
-        self.info["arrow"] = {"exists": self.checkBoxArrow.isChecked(),
-                              "height": self.heightArrowSpin.value(),
-                              "width": self.widthArrowlSpin.value()}
-
-    def get_ind_data(self):
-        # ифнформация об индификаторах, считанная из пользовательского интерфейса
-        self.info["ind"] = {"height": self.heightIndSpin.value(),
-                            "width": self.widthIndlSpin.value(),
-                            "ind_arrow_margin": self.marginIndSpin.value()}
 
     def send_data_to_generate_thread(self):
         GenHandler(self.info).start()
