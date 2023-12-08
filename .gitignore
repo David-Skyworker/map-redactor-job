@@ -4,4 +4,4 @@ UI/UI_Main.ui
 UI/UI_RcSettings.ui
 UI/UI_IndSettings.ui
 images/*
-**/__pycache__/
+__pycache__
