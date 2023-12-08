@@ -3,7 +3,5 @@ UI/UI_Main_2.ui
 UI/UI_Main.ui
 UI/UI_RcSettings.ui
 UI/UI_IndSettings.ui
-UI/__pycache__/
-libs/__pycache__/
 images/*
 **/__pycache__/
