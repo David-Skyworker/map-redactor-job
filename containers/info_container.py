@@ -31,6 +31,7 @@ class RailWayInfo:
         self.general.direction = self.window.comboBoxDirect.currentIndex()
         self.general.set_number = self.window.setNumSpin.value()
 
+
     def _get_rc_data(self):
         # ифнформация об РЦ, считанная из пользовательского интерфейса
         self.rc_info = RCInfo()
