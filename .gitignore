@@ -6,3 +6,4 @@ UI/UI_IndSettings.ui
 UI/__pycache__/
 libs/__pycache__/
 images/*
+**/__pycache__/
