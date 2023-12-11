@@ -73,6 +73,9 @@ class GenHandler(QThread):
 
 
 class ReadHandler(QThread):
+    duplicates_file_signal = QtCore.pyqtSignal(object)
+    read_success_signal = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.file_path = config.file_path
@@ -82,7 +85,14 @@ class ReadHandler(QThread):
         self.exit()
 
     def run(self):
-        self.read_config()
+        try:
+            self.read_config()
+        except configparser.DuplicateOptionError as e:
+            self.duplicates_file_signal.emit(e)
+            self.deleteLater()
+            return
+
+        self.read_success_signal.emit()
 
     def read_config(self):
         c = configparser.ConfigParser(comment_prefixes='/', allow_no_value=True)

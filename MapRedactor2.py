@@ -2,6 +2,7 @@ from UI.UI_Main_2 import Ui_MainWindow
 from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QDialog, QButtonGroup, QMessageBox
 from PyQt5 import QtWidgets
 
+from icecream import ic
 import sys
 import os
 import time
@@ -11,7 +12,7 @@ from libs.thread_handlers import ReadHandler, GenHandler, FileChecker
 from utilities.interface_utilities import EventListener, WindowView
 from utilities.content_utilities import TableContent, IndicatorConfig
 from utilities.validators import RcNameValidator
-from utilities.messages import TableTypoMessage, NoFileMessage, FileGoneMessage, FileChangedMessage
+from utilities.messages import TableTypoMessage, NoFileMessage, FileGoneMessage, FileChangedMessage, DuplicatedOptions
 from utilities.messages import UnfinishedChangeMessage
 from containers.info_container import RailWayInfo
 
@@ -137,21 +138,29 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def read_file(self, file_path):
         self.prepare_config_path_and_data(file_path)
-        self.set_main_window_title()
         self.set_read_and_check_workers()
 
     def prepare_config_path_and_data(self, path):
         config.file_data = None
-        config.file_path = path.replace('\\', '/')
+        ic(config.file_path)
+        config.file_path = path.replace('\\', '???')
+        config.file_path = path
+        ic(config.file_path)
         config.last_modified_date = time.ctime(os.path.getmtime(config.file_path))
 
-    def set_main_window_title(self):
-        new_title = config.file_path.split('\\')[-1]
-        self.setWindowTitle("MapRedactor: " + new_title)
 
     def set_read_and_check_workers(self):
-        ReadHandler().start()
+        file_reader = ReadHandler()
+        file_reader.duplicates_file_signal.connect(self.send_message_duplicates)
+        file_reader.read_success_signal.connect(self.set_main_window_title)
+        file_reader.start()
         # self.file_checker.start()
+
+    def set_main_window_title(self):
+        new_title = config.file_path.split('/')[-1]
+        ic(new_title)
+
+        self.setWindowTitle("MapRedactor: " + new_title)
 
     def push_generate_button(self):
         if not self.is_rc_editing_finished():
@@ -212,6 +221,13 @@ class Window(QMainWindow, Ui_MainWindow):
         NoFileMessage()
 
     # ---------------------------------------------------------------------
+
+    # change value event listeners and connected func
+    # ---------------------------------------------------------------------
+    def send_message_duplicates(self, error_message):
+        DuplicatedOptions(error_message)
+    # ---------------------------------------------------------------------
+
 
     # change value event listeners and connected func
     # ---------------------------------------------------------------------

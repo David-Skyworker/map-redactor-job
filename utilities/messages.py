@@ -76,3 +76,26 @@ class UnfinishedChangeMessage(Message):
         msg.setInformativeText("Генерация не началась, проверьте правильность\nнаименования первой рельсовой цепи!")
         msg.setWindowTitle("Ошибка")
         msg.exec_()
+
+
+class DuplicatedOptions(Message):
+    def __init__(self, message):
+        super().__init__()
+        self._message = str(message)
+
+        self._build_informative_text()
+        self._appear()
+
+    def _appear(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setText("Ошибка чтения файла!" + "\t" * 4)
+        msg.setInformativeText(self._message)
+        msg.setWindowTitle("Ошибка")
+        msg.exec_()
+
+    def _build_informative_text(self):
+        error_info = self._message.split("'")[1::2]
+        key = error_info[1]
+        section = error_info[2]
+        self._message = f"При чтении файла в секции {section} обнаружено\nдублирование ключа {key}!"
