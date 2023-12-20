@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="Tab1">
      <attribute name="title">
@@ -41,14 +41,14 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QPushButton" name="openButtonAdd">
+        <widget class="QPushButton" name="openAddButton">
          <property name="text">
           <string>Открыть</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="generateButtonAdd">
+        <widget class="QPushButton" name="generateAddButton">
          <property name="text">
           <string>Сгенерировать</string>
          </property>
@@ -2977,7 +2977,7 @@
        <property name="title">
         <string>Выбор элементов</string>
        </property>
-       <widget class="QComboBox" name="comboBox">
+       <widget class="QComboBox" name="comboBoxSetNumber">
         <property name="geometry">
          <rect>
           <x>110</x>
@@ -3017,17 +3017,17 @@
        <widget class="QToolButton" name="toolButton">
         <property name="geometry">
          <rect>
-          <x>190</x>
+          <x>180</x>
           <y>30</y>
-          <width>51</width>
-          <height>19</height>
+          <width>81</width>
+          <height>20</height>
          </rect>
         </property>
         <property name="contextMenuPolicy">
          <enum>Qt::ActionsContextMenu</enum>
         </property>
         <property name="text">
-         <string>Меню</string>
+         <string>Элементы</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -3049,13 +3049,13 @@
          <x>0</x>
          <y>70</y>
          <width>281</width>
-         <height>141</height>
+         <height>291</height>
         </rect>
        </property>
        <property name="title">
         <string>Действия</string>
        </property>
-       <widget class="QComboBox" name="comboBox_2">
+       <widget class="QComboBox" name="comboBoxActionType">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -3080,95 +3080,108 @@
          </property>
         </item>
        </widget>
-       <widget class="QSpinBox" name="spinBox">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>100</y>
-          <width>71</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="maximum">
-         <number>1500</number>
-        </property>
-        <property name="singleStep">
-         <number>50</number>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_24">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>100</y>
-          <width>80</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Plain</enum>
-        </property>
-        <property name="text">
-         <string>Сдвиг:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_37">
+       <widget class="QGroupBox" name="shiftGroupBox">
         <property name="geometry">
          <rect>
           <x>10</x>
           <y>70</y>
-          <width>80</width>
-          <height>20</height>
+          <width>241</width>
+          <height>201</height>
          </rect>
         </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
+        <property name="title">
+         <string>Параметры сдвига</string>
         </property>
-        <property name="frameShadow">
-         <enum>QFrame::Plain</enum>
-        </property>
-        <property name="text">
-         <string>Направление:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-       <widget class="QComboBox" name="comboBox_3">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>70</y>
-          <width>71</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <item>
-         <property name="text">
-          <string>Вверх</string>
+        <widget class="QLabel" name="label_24">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>100</y>
+           <width>80</width>
+           <height>20</height>
+          </rect>
          </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Вниз</string>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
          </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Вправо</string>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
          </property>
-        </item>
-        <item>
          <property name="text">
-          <string>Влево</string>
+          <string>Сдвиг:</string>
          </property>
-        </item>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+        <widget class="QComboBox" name="comboBoxShiftDirect">
+         <property name="geometry">
+          <rect>
+           <x>90</x>
+           <y>50</y>
+           <width>71</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <item>
+          <property name="text">
+           <string>Вверх ↑</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Вниз ↓</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Вправо →</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Влево ←</string>
+          </property>
+         </item>
+        </widget>
+        <widget class="QSpinBox" name="spinBoxShift">
+         <property name="geometry">
+          <rect>
+           <x>90</x>
+           <y>100</y>
+           <width>71</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="maximum">
+          <number>1500</number>
+         </property>
+         <property name="singleStep">
+          <number>50</number>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_37">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>50</y>
+           <width>80</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="text">
+          <string>Направление:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
        </widget>
       </widget>
       <widget class="QGroupBox" name="groupBox_25">
@@ -3181,7 +3194,7 @@
         </rect>
        </property>
        <property name="title">
-        <string>Конфиг. перегона</string>
+        <string>Конфиг. комплекта</string>
        </property>
        <widget class="QLabel" name="label_39">
         <property name="geometry">
@@ -3205,17 +3218,17 @@
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
-       <widget class="QLabel" name="label_40">
+       <widget class="QLabel" name="station_name_label">
         <property name="geometry">
          <rect>
-          <x>180</x>
-          <y>35</y>
-          <width>47</width>
-          <height>13</height>
+          <x>170</x>
+          <y>30</y>
+          <width>90</width>
+          <height>20</height>
          </rect>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>-</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_42">
@@ -3240,24 +3253,24 @@
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
-       <widget class="QLabel" name="label_44">
+       <widget class="QLabel" name="direction_name_label">
         <property name="geometry">
          <rect>
-          <x>180</x>
-          <y>75</y>
-          <width>47</width>
-          <height>13</height>
+          <x>170</x>
+          <y>70</y>
+          <width>90</width>
+          <height>20</height>
          </rect>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>-</string>
         </property>
        </widget>
        <widget class="Line" name="line_19">
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>100</y>
+          <y>125</y>
           <width>251</width>
           <height>16</height>
          </rect>
@@ -3288,20 +3301,59 @@
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
-       <widget class="QLabel" name="label_70">
+       <widget class="QLabel" name="direction_label">
         <property name="geometry">
          <rect>
-          <x>180</x>
-          <y>145</y>
-          <width>47</width>
-          <height>13</height>
+          <x>170</x>
+          <y>140</y>
+          <width>90</width>
+          <height>20</height>
          </rect>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>-</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_40">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>110</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Данные маршрута:</string>
         </property>
        </widget>
       </widget>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>590</x>
+        <y>20</y>
+        <width>160</width>
+        <height>80</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QPushButton" name="openRedactButton">
+         <property name="text">
+          <string>Открыть</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="applyRedactButton">
+         <property name="text">
+          <string>Применить</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </widget>

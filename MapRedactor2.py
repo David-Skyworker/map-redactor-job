@@ -1,5 +1,5 @@
-from UI.UI_Main_2 import Ui_MainWindow
-from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem, QDialog, QButtonGroup, QMessageBox
+from UI.UI_Main_3 import Ui_MainWindow
+from PyQt5.QtWidgets import QMainWindow, QApplication, QButtonGroup
 from PyQt5 import QtWidgets
 
 from icecream import ic
@@ -9,10 +9,12 @@ import time
 
 from libs import config
 from libs.thread_handlers import ReadHandler, GenHandler, FileChecker
-from utilities.interface_utilities import EventListener, WindowView
+from utilities.interface_utilities import GeneratorEventListener, RedactorEventListener, GeneralEventListener,\
+    GenerationWindowView, RedactionWindowView
 from utilities.content_utilities import TableContent, IndicatorConfig
 from utilities.validators import RcNameValidator
-from utilities.messages import TableTypoMessage, NoFileMessage, FileGoneMessage, FileChangedMessage, DuplicatedOptions
+# from utilities.messages import TableTypoMessage, NoFileMessage, FileGoneMessage, FileChangedMessage, DuplicatedOptions\
+from utilities.messages import Message, WarningType
 from utilities.messages import UnfinishedChangeMessage
 from containers.info_container import RailWayInfo
 
@@ -31,37 +33,24 @@ RC_NAME_ID = 0
 RC_WIDTH_ID = 1
 
 
-class Window(QMainWindow, Ui_MainWindow):
+class GenerationWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
         self.start_name_validator = RcNameValidator(self)
         # self.file_checker = FileChecker()
-        self.rc_table = TableContent(self)
-        self.indicators = IndicatorConfig(self)
 
         # поля для работы с данными интерфейса
         self.info = RailWayInfo(self)
 
         # ----------------------------------------------------------------------
 
-        self.setFixedSize(self.size())
-
         # группы для радио кнопок
         self.radio_name_group = QButtonGroup()
 
-        # установка слушателей событий и сигналов
-        EventListener(self).set_window_event_linking()
-
-        self.set_default_ui_view()
-
-        # show the window
-        self.show()
     # секция настройки начальной кастомизации приложения
     # ---------------------------------------------------------------------
 
-    def set_default_ui_view(self):
-        WindowView(self).set_default_ui_view()
+
 
     # ---------------------------------------------------------------------
 
@@ -115,7 +104,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.clear_config_and_interface_file_data()
 
     def send_message_file_gone(self):
-        FileGoneMessage()
+        Message(warning_type=WarningType.FILE_GONE)
 
     def clear_config_and_interface_file_data(self):
         self.setWindowTitle("MapRedactor")
@@ -124,43 +113,13 @@ class Window(QMainWindow, Ui_MainWindow):
         config.file_data = None
 
     def inform_and_offer_data_update(self):
-        answer = FileChangedMessage()
+        answer = Message(warning_type=WarningType.FILE_CHANGED)
         if answer.is_reset_file:
             self.read_file(config.file_path)
     # ---------------------------------------------------------------------
 
     # push button event listeners and connected func
     # ---------------------------------------------------------------------
-    def push_read_button(self):
-        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(caption="Open File", filter="Config Files (*.ini)")
-        if file_path != "":
-            self.read_file(file_path)
-
-    def read_file(self, file_path):
-        self.prepare_config_path_and_data(file_path)
-        self.set_read_and_check_workers()
-
-    def prepare_config_path_and_data(self, path):
-        config.file_data = None
-        ic(config.file_path)
-        config.file_path = path.replace('\\', '???')
-        config.file_path = path
-        ic(config.file_path)
-        config.last_modified_date = time.ctime(os.path.getmtime(config.file_path))
-
-
-    def set_read_and_check_workers(self):
-        file_reader = ReadHandler()
-        file_reader.duplicates_file_signal.connect(self.send_message_duplicates)
-        file_reader.read_success_signal.connect(self.set_main_window_title)
-        file_reader.start()
-        # self.file_checker.start()
-
-    def set_main_window_title(self):
-        new_title = config.file_path.split('/')[-1]
-        ic(new_title)
-
-        self.setWindowTitle("MapRedactor: " + new_title)
 
     def push_generate_button(self):
         if not self.is_rc_editing_finished():
@@ -168,6 +127,7 @@ class Window(QMainWindow, Ui_MainWindow):
             return
 
         if self.is_table_has_typo():
+            print("in")
             self.send_message_typo()
             return
 
@@ -185,10 +145,10 @@ class Window(QMainWindow, Ui_MainWindow):
         UnfinishedChangeMessage()
 
     def is_table_has_typo(self):
-        self.rc_table.is_edited_correctly()
+        return self.rc_table.is_edited_correctly() is False
 
     def send_message_typo(self):
-        TableTypoMessage()
+        Message(warning_type=WarningType.TABLE_TYPO)
 
     def is_file_choosen(self):
         return config.file_path != ""
@@ -218,19 +178,19 @@ class Window(QMainWindow, Ui_MainWindow):
         GenHandler(self.info).start()
 
     def send_message_no_file(self):
-        NoFileMessage()
+        Message(warning_type=WarningType.NO_FILE)
 
     # ---------------------------------------------------------------------
 
     # change value event listeners and connected func
     # ---------------------------------------------------------------------
     def send_message_duplicates(self, error_message):
-        DuplicatedOptions(error_message)
+        Message(warning_type=WarningType.DUPLICATION_FOUND, message=error_message)
     # ---------------------------------------------------------------------
-
 
     # change value event listeners and connected func
     # ---------------------------------------------------------------------
+
     def lose_focus(self):
         self.numRcSpin.clearFocus()
         self.widthRcSpin.clearFocus()
@@ -376,6 +336,80 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def push_select_button(self):
         print("any button pushed")
+
+
+SHIFT_ACTION = 0
+
+
+class RedactorWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+    def on_apply(self):
+        print("apply")
+
+    def change_action(self):
+        ic(self.comboBoxActionType)
+        action_type = self.comboBoxActionType.currentIndex()
+        ic(action_type)
+        if action_type == SHIFT_ACTION:
+            self.shiftGroupBox.setEnabled(True)
+        else:
+            self.shiftGroupBox.setDisabled(True)
+
+    def change_set(self):
+        print("change_set")
+
+
+class Window(Ui_MainWindow, GenerationWindow, RedactorWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        # установка слушателей событий и сигналов
+        GeneratorEventListener(self).set_window_event_linking()
+        RedactorEventListener(self).set_window_event_linking()
+        GeneralEventListener(self).set_window_event_linking()
+
+        # контент модуля генерации
+        self.rc_table = TableContent(self)
+        self.indicators = IndicatorConfig(self)
+
+        self.set_default_ui_view()
+
+        self.show()
+
+    def set_default_ui_view(self):
+        GenerationWindowView(self).set_default_ui_view()
+    # общие кнопки модулей программы
+    # ---------------------------------------------------------------------
+    def push_read_button(self):
+        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(caption="Open File", filter="Config Files (*.ini)")
+        if file_path != "":
+            self.read_file(file_path)
+
+    def read_file(self, file_path):
+        self.prepare_config_path_and_data(file_path)
+        self.set_read_and_check_workers()
+
+    def prepare_config_path_and_data(self, path):
+        config.file_data = None
+        config.file_path = path
+        config.last_modified_date = time.ctime(os.path.getmtime(config.file_path))
+        ic(config.last_modified_date)
+
+
+    def set_read_and_check_workers(self):
+        file_reader = ReadHandler()
+        file_reader.duplicates_file_signal.connect(self.send_message_duplicates)
+        file_reader.read_success_signal.connect(self.set_main_window_title)
+        file_reader.start()
+        # self.file_checker.start()
+
+    def set_main_window_title(self):
+        new_title = config.file_path.split('/')[-1]
+        self.setWindowTitle("MapRedactor: " + new_title)
+
+    # ---------------------------------------------------------------------
 
 
 if __name__ == "__main__":

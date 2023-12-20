@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+from icecream import ic
+
 from libs import config
 from utilities.content_utilities import TableContent
 
@@ -9,9 +12,18 @@ RC_NAME_ID = 0
 RC_WIDTH_ID = 1
 
 
-class EventListener:
+class EventListener(ABC):
     def __init__(self, main_window):
         self.window = main_window
+
+    @abstractmethod
+    def set_window_event_linking(self):
+        raise NotImplementedError
+
+
+class GeneratorEventListener(EventListener):
+    def __init__(self, main_window):
+        super().__init__(main_window)
 
     def set_window_event_linking(self):
         self._set_radio_button_listeners()
@@ -26,8 +38,7 @@ class EventListener:
         self.window.radio_name_group.idClicked.connect(self.window.change_name_mode_settings)
 
     def _set_button_listeners(self):
-        self.window.openButtonAdd.clicked.connect(self.window.push_read_button)
-        self.window.generateButtonAdd.clicked.connect(self.window.push_generate_button)
+        self.window.generateAddButton.clicked.connect(self.window.push_generate_button)
 
     def _set_change_event_listeners(self):
         self._tab_visibility_change()
@@ -111,9 +122,46 @@ class EventListener:
         self.window.file_checker.modified_file_signal.connect(self.window.inform_and_offer_data_update)
 
 
-class WindowView:
+class RedactorEventListener(EventListener):
+    def __init__(self, main_window):
+        super().__init__(main_window)
+
+    def set_window_event_linking(self):
+        self._set_button_listeners()
+        self._set_change_event_listeners()
+
+    def _set_button_listeners(self):
+        self.window.applyRedactButton.clicked.connect(self.window.on_apply)
+
+    def _set_change_event_listeners(self):
+        ic.disable()
+        ic(self.window.change_action)
+        ic(self.window)
+        self.window.comboBoxSetNumber.currentTextChanged.connect(self.window.change_set)
+        self.window.comboBoxActionType.currentTextChanged.connect(self.window.change_action)
+
+
+class GeneralEventListener(EventListener):
+    def __init__(self, main_window):
+        super().__init__(main_window)
+
+    def set_window_event_linking(self):
+        self.window.openAddButton.clicked.connect(self.window.push_read_button)
+        self.window.openRedactButton.clicked.connect(self.window.push_read_button)
+
+
+class WindowView(ABC):
     def __init__(self, main_window):
         self.window = main_window
+
+    @abstractmethod
+    def set_default_ui_view(self):
+        raise NotImplementedError
+
+
+class GenerationWindowView(WindowView):
+    def __init__(self, main_window):
+        super().__init__(main_window)
 
     def set_default_ui_view(self):
         self.set_tabs_visibility_off()
@@ -135,6 +183,14 @@ class WindowView:
 
     def set_default_indicators(self):
         self.window.indicators.set_default()
+
+
+class RedactionWindowView(WindowView):
+    def __init__(self, main_window):
+        super().__init__(main_window)
+
+    def set_default_ui_view(self):
+        pass
 
 
 
